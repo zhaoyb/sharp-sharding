@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+    <context:annotation-config/>
+    <aop:aspectj-autoproxy/>
+    <context:component-scan base-package="com.sharpframework"/>
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+
+
+    <aop:config>
+        <aop:pointcut
+                expression="execution(public * com.sharpframework.test.repository.*Dao.*(..)) and @annotation(com.sharpframework.shardingcore.shardingannotation.Sharding)"
+                id="shardingpoint"/>
+        <aop:aspect id="adviceRespect" ref="sharding" order="1">
+            <aop:before pointcut-ref="shardingpoint" method="shardingDB"/>
+            <aop:after pointcut-ref="shardingpoint" method="cleanshardingDB"/>
+        </aop:aspect>
+
+    </aop:config>
+
+    <bean id="sharding" class="com.sharpframework.shardingcore.ShardingDBAspect"></bean>
+
+
+    <bean id="db" class="com.alibaba.druid.pool.DruidDataSource"
+          destroy-method="close" abstract="true">
+        <!-- 初始化连接大小 -->
+        <property name="initialSize" value="${initialSize}"></property>
+        <!-- 连接池最大数量 -->
+        <property name="maxActive" value="${maxActive}"></property>
+        <!-- 连接池最大空闲 -->
+        <property name="maxIdle" value="${maxIdle}"></property>
+        <!-- 连接池最小空闲 -->
+        <property name="minIdle" value="${minIdle}"></property>
+        <!-- 获取连接最大等待时间 -->
+        <property name="maxWait" value="${maxWait}"></property>
+
+        <property name="minEvictableIdleTimeMillis" value="60000"></property>
+        <property name="testWhileIdle" value="true"></property>
+        <property name="timeBetweenEvictionRunsMillis" value="45000"></property>
+        <property name="validationQuery" value="select 'x'"></property>
+        <property name="testOnBorrow" value="false"></property>
+        <property name="defaultAutoCommit" value="false"></property>
+    </bean>
+
+    <bean id="db-0" parent="db">
+        <property name="driverClassName" value="${user.db0.driver}"/>
+        <property name="url" value="${user.db0.url}"/>
+        <property name="username" value="${user.db0.username}"/>
+        <property name="password" value="${user.db0.password}"/>
+    </bean>
+
+    <bean id="db-1" parent="db">
+        <property name="driverClassName" value="${user.db1.driver}"/>
+        <property name="url" value="${user.db1.url}"/>
+        <property name="username" value="${user.db1.username}"/>
+        <property name="password" value="${user.db1.password}"/>
+
+    </bean>
+
+    <bean id="db-2" parent="db">
+        <property name="driverClassName" value="${user.db2.driver}"/>
+        <property name="url" value="${user.db2.url}"/>
+        <property name="username" value="${user.db2.username}"/>
+        <property name="password" value="${user.db2.password}"/>
+    </bean>
+
+
+    <bean id="multipleDataSource" class="com.sharpframework.shardingcore.multippledb.MultipleDataSource" primary="true">
+        <property name="defaultTargetDataSource" ref="db-0"/>
+        <property name="targetDataSources">
+            <map>
+                <entry key="db-0" value-ref="db-0"/>
+                <entry key="db-1" value-ref="db-1"/>
+                <entry key="db-2" value-ref="db-2"/>
+            </map>
+        </property>
+    </bean>
+
+    <!-- spring和MyBatis完美整合，不需要mybatis的配置映射文件 -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="multipleDataSource"/>
+        <!-- 自动扫描mapping.xml文件 -->
+        <property name="mapperLocations" value="classpath:mapping/*.xml"></property>
+    </bean>
+
+    <!-- DAO接口所在包名，Spring会自动查找其下的类 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.sharpframework.test.mapping"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+    </bean>
+
+</beans>
