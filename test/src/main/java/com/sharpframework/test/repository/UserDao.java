@@ -3,7 +3,6 @@ package com.sharpframework.test.repository;
 
 import com.sharpframework.test.mapping.UserMapper;
 import com.sharpframework.test.model.User;
-import com.sharpframework.shardingcore.multippledb.DataSourceName;
 import com.sharpframework.shardingcore.shardingannotation.Sharding;
 import com.sharpframework.shardingcore.shardingannotation.ShardingKey;
 import com.sharpframework.shardingcore.shardingmodel.ShardingModel;
@@ -19,7 +18,8 @@ public class UserDao {
     @Autowired
     private UserMapper userMapper;
 
-    @Sharding(dataSource = DataSourceName.UserDb, shardingModel = ShardingModel.MOD, shardingCount = 3)
+    // 注意这里 datasource = "db"    db是数据库连接的前缀，和配置文件中的配置有关 经过计算后，会得到db-1这样的结果
+    @Sharding(dataSource = "db", shardingModel = ShardingModel.MOD, shardingCount = 3)
     public boolean addUser(@ShardingKey int userId, User user) {
         int rowCount = userMapper.addUser(user);
         if (rowCount > 0)
@@ -28,7 +28,7 @@ public class UserDao {
             return false;
     }
 
-    @Sharding(dataSource = DataSourceName.UserDb, shardingModel = ShardingModel.MOD, shardingCount = 3)
+    @Sharding(dataSource = "db", shardingModel = ShardingModel.MOD, shardingCount = 3)
     public User getUserById(@ShardingKey Integer id) {
         return userMapper.getUserById(id);
     }

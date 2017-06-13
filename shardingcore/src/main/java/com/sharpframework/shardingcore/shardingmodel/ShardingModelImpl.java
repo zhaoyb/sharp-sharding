@@ -5,7 +5,7 @@ package com.sharpframework.shardingcore.shardingmodel;
  */
 public class ShardingModelImpl {
 
-    public static String shardingByMOd(Object shardingValue, int shardingCount) {
+    public static String shardingByMod(Object shardingValue, int shardingCount) {
         int shrdingValue = Integer.parseInt(String.valueOf(shardingValue));
         return String.valueOf(shrdingValue % shardingCount);
     }

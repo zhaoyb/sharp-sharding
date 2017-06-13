@@ -9,7 +9,6 @@ import com.sharpframework.shardingcore.shardingmodel.ShardingModelImpl;
 import org.aspectj.lang.JoinPoint;
 
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -33,7 +32,7 @@ public class ShardingDBAspect {
 
             switch (sharding.shardingModel()) {
                 case MOD:
-                    offset = ShardingModelImpl.shardingByMOd(jp.getArgs()[0], sharding.shardingCount());
+                    offset = ShardingModelImpl.shardingByMod(jp.getArgs()[0], sharding.shardingCount());
                     break;
                 case Year:
                     break;
